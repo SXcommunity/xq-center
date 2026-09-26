@@ -1,0 +1,184 @@
+/*! 尚贤圈 · 智能客服浮窗样式（三站共用） */
+
+/* 右下角浮动操作分列：位置由 JS 计算 --sxq-ai-bottom / --sxq-ai-right，
+   保证与站点自带的浮动按钮（返回顶部 #backTop、发布 .fab 等）不重叠 */
+.sxq-ai {
+  position: fixed;
+  right: var(--sxq-ai-right, 18px);
+  bottom: var(--sxq-ai-bottom, 18px);
+  z-index: 9998;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* 悬浮按钮 */
+.sxq-ai-fab {
+  position: relative;
+  width: 72px; height: 72px;
+  border: none; border-radius: 50%;
+  background: #d6482f;
+  box-shadow: 0 10px 24px rgba(214, 72, 47, .32);
+  cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.sxq-ai-fab:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 30px rgba(214, 72, 47, .4); }
+.sxq-ai-fab:focus-visible { outline: 3px solid rgba(214, 72, 47, .4); outline-offset: 3px; }
+/* 机器人动画：放大到 60px，清晰可见 */
+.sxq-ai-fab-lottie { width: 60px; height: 60px; display: block; pointer-events: none; }
+.sxq-ai-fab-lottie .sxq-lottie-stage svg { filter: brightness(0) invert(1); }
+.sxq-ai-fab-dot {
+  position: absolute; top: 7px; right: 7px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #4CAF50; border: 2px solid #fff;
+}
+
+/* 收起后的小标签（把浮窗彻底让开页面） */
+.sxq-ai-tab {
+  display: none; align-items: center; gap: 6px;
+  border: none; cursor: pointer;
+  background: #d6482f; color: #fff;
+  border-radius: 999px; padding: 9px 14px;
+  box-shadow: 0 8px 20px rgba(214, 72, 47, .3);
+  font-size: 12.5px; white-space: nowrap;
+}
+.sxq-ai-tab:hover { filter: brightness(1.06); }
+.sxq-ai.sxq-ai-hidden .sxq-ai-fab { display: none; }
+.sxq-ai.sxq-ai-hidden .sxq-ai-panel { display: none !important; }
+.sxq-ai.sxq-ai-hidden .sxq-ai-tab { display: flex; }
+
+/* 面板：锚定在按钮正上方（bottom:100%），不参与流式布局。
+   尺寸可由用户拖拽左上角调整（--sxq-ai-w / --sxq-ai-h，JS 会持久化并做范围钳制）。 */
+.sxq-ai-panel {
+  position: absolute; right: 0; bottom: calc(100% + 10px);
+  width: var(--sxq-ai-w, min(380px, calc(100vw - 36px)));
+  height: var(--sxq-ai-h, min(560px, var(--sxq-ai-maxh, calc(100vh - 150px))));
+  max-width: calc(100vw - 24px);
+  max-height: var(--sxq-ai-maxh, calc(100vh - 120px));
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, .08);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(30, 20, 15, .22);
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: sxqAiIn .2s ease;
+}
+/* 拖拽调整大小手柄（左上角，因为面板锚在右下） */
+.sxq-ai-resize {
+  position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+  cursor: nwse-resize; z-index: 4; touch-action: none;
+}
+.sxq-ai-resize::before {
+  content: ""; position: absolute; left: 6px; top: 6px; width: 10px; height: 10px;
+  border-left: 2px solid rgba(0, 0, 0, .16); border-top: 2px solid rgba(0, 0, 0, .16);
+  border-radius: 3px 0 0 0; transition: border-color .15s ease;
+}
+.sxq-ai-resize:hover::before { border-color: rgba(214, 72, 47, .6); }
+.sxq-ai-resizing { user-select: none; }
+.sxq-ai-resizing .sxq-ai-panel { animation: none; }
+
+/* 关键修复：hidden 属性必须能真正隐藏（否则被上面的 display:flex 覆盖，面板关不掉） */
+.sxq-ai-panel[hidden] { display: none !important; }
+@keyframes sxqAiIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+
+.sxq-ai-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px; background: #f7f6f2;
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+.sxq-ai-title { font-weight: 600; color: #2c2c2c; font-size: 14px; }
+.sxq-ai-aigc {
+  font-size: 10px; line-height: 1; padding: 4px 6px; border-radius: 6px;
+  color: #d6482f; background: rgba(214, 72, 47, .1); border: 1px solid rgba(214, 72, 47, .25);
+}
+.sxq-ai-head-acts { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+.sxq-ai-min, .sxq-ai-close {
+  border: none; background: transparent; cursor: pointer; padding: 0 5px;
+}
+.sxq-ai-min { font-size: 12px; color: #8a8580; }
+.sxq-ai-min:hover { color: #d6482f; }
+.sxq-ai-close { font-size: 22px; line-height: 1; color: #8a8580; }
+.sxq-ai-close:hover { color: #d6482f; }
+
+.sxq-ai-log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.sxq-ai-msg { max-width: 84%; font-size: 13.5px; line-height: 1.6; padding: 9px 12px; border-radius: 12px; white-space: normal; word-break: break-word; }
+.sxq-ai-msg--assistant { align-self: flex-start; background: #f2f1ee; color: #2c2c2c; border-top-left-radius: 4px; }
+.sxq-ai-msg--user { align-self: flex-end; background: #d6482f; color: #fff; border-top-right-radius: 4px; white-space: pre-wrap; }
+.sxq-ai-msg--error { background: #fdecea; color: #b3351f; border: 1px solid rgba(179, 53, 31, .25); }
+
+/* 自动识别的链接 / 邮箱 */
+.sxq-ai-link {
+  color: #2f7ad0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+.sxq-ai-link:hover { color: #d6482f; }
+.sxq-ai-msg--user .sxq-ai-link { color: #fff; }
+.sxq-ai-typing::after { content: '…'; animation: sxqAiDots 1s steps(3) infinite; }
+@keyframes sxqAiDots { 0% { opacity: .2 } 50% { opacity: 1 } 100% { opacity: .2 } }
+
+/* 回答来源标记：预设 / AI 生成 */
+.sxq-ai-tag {
+  display: inline-block; margin-top: 8px; padding: 1px 8px; border-radius: 999px;
+  font-size: 10.5px; line-height: 1.7; letter-spacing: .02em;
+  background: rgba(44, 44, 44, .06); color: #8a8a8a; border: 1px solid rgba(44, 44, 44, .08);
+}
+.sxq-ai-tag--preset { background: rgba(185, 138, 47, .12); color: #8a6520; border-color: rgba(185, 138, 47, .28); }
+
+/* 推荐提问：单行横向滚动（不再换行占掉半屏），可整体收起 */
+.sxq-ai-quickbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 12px 8px;
+}
+.sxq-ai-quick {
+  flex: 1; min-width: 0;
+  display: flex; flex-wrap: nowrap; gap: 6px;
+  overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.sxq-ai-quick::-webkit-scrollbar { display: none; }
+.sxq-ai-quick.sxq-ai-quick--off { display: none; }
+.sxq-ai-chip {
+  font-size: 12px; padding: 5px 9px; border-radius: 999px; cursor: pointer;
+  color: #4a4a4a; background: #fff; border: 1px solid rgba(0, 0, 0, .12);
+  transition: all .15s ease; white-space: nowrap; flex: 0 0 auto;
+}
+.sxq-ai-chip:hover { color: #d6482f; border-color: rgba(214, 72, 47, .5); background: rgba(214, 72, 47, .06); }
+.sxq-ai-qtoggle {
+  flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, .1); background: #fff;
+  color: #8a8580; font-size: 11.5px; padding: 4px 9px; border-radius: 999px; cursor: pointer;
+  transition: all .15s ease; white-space: nowrap;
+}
+.sxq-ai-qtoggle:hover { color: #d6482f; border-color: rgba(214, 72, 47, .4); }
+
+.sxq-ai-form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid rgba(0, 0, 0, .06); }
+.sxq-ai-input {
+  flex: 1; min-width: 0; font-size: 13.5px; padding: 9px 11px;
+  border: 1px solid rgba(0, 0, 0, .14); border-radius: 10px; outline: none; color: #2c2c2c;
+}
+.sxq-ai-input:focus { border-color: #d6482f; box-shadow: 0 0 0 3px rgba(214, 72, 47, .12); }
+.sxq-ai-send {
+  border: none; border-radius: 10px; padding: 0 16px; cursor: pointer;
+  background: #d6482f; color: #fff; font-size: 13.5px;
+}
+.sxq-ai-send:disabled { opacity: .5; cursor: not-allowed; }
+
+.sxq-ai-foot {
+  padding: 8px 12px 10px; font-size: 11px; color: #8a8580;
+  display: flex; flex-wrap: wrap; gap: 4px 8px; background: #faf9f7;
+  border-top: 1px solid rgba(0, 0, 0, .05);
+}
+.sxq-ai-foot a { color: #4a90d9; text-decoration: none; }
+.sxq-ai-foot a:hover { text-decoration: underline; }
+
+/* 手机端：按钮略小；位置仍由 JS 的浮动分列算法计算（含底部 Tab 避让） */
+@media (max-width: 768px) {
+  .sxq-ai-fab { width: 64px; height: 64px; }
+  .sxq-ai-fab-lottie { width: 52px; height: 52px; }
+  .sxq-ai-panel { width: min(360px, calc(100vw - 28px)); }
+}

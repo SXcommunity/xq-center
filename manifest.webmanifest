@@ -1,0 +1,24 @@
+{
+  "name": "贤圈中心",
+  "short_name": "贤圈",
+  "description": "桂林市尚贤学校校园社区：日常动态、专属提问、学业互助",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#f7f6f2",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "./assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>尚贤圈 · 开发待办清单</title>
+<meta name="description" content="尚贤圈下一轮开发待办总清单在线看板">
+<style>
+:root{
+  --paper:#f4ede0; --paper2:#ebe0cc; --ink:#2b2b2b; --ink2:#555;
+  --zhusha:#d6482f; --zhusha2:#c8401f; --nuanjin:#b98a2f;
+  --line:#d4c4a8; --green:#4a7c59; --card:#fbf6ec;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{max-width:none!important;width:auto!important;margin:0!important}
+body{font-family:"PingFang SC","MIUI","HarmonyOS Sans","Microsoft YaHei",sans-serif;background:var(--paper);color:var(--ink);line-height:1.7;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(214,72,47,.04),transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(185,138,47,.05),transparent 50%);pointer-events:none;z-index:0}
+
+.wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px;position:relative;z-index:1}
+
+header{margin-bottom:36px}
+.eyebrow{display:inline-block;font-size:12px;letter-spacing:.3em;color:var(--zhusha);border:1px solid var(--zhusha);border-radius:2px;padding:2px 10px;margin-bottom:14px}
+h1{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:.02em;margin-bottom:10px;background:linear-gradient(135deg,var(--zhusha),var(--nuanjin));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--ink2);font-size:15px;max-width:680px}
+.meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;font-size:13px;color:var(--ink2)}
+.meta b{color:var(--ink)}
+
+.progress-bar{margin:24px 0 36px;background:var(--paper2);border-radius:99px;height:10px;overflow:hidden;border:1px solid var(--line)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--zhusha),var(--nuanjin));border-radius:99px;transition:width .6s}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin-bottom:6px}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.filter-btn{padding:6px 16px;border:1px solid var(--line);background:var(--card);border-radius:99px;font-size:13px;cursor:pointer;transition:.2s;color:var(--ink2)}
+.filter-btn:hover{border-color:var(--zhusha);color:var(--zhusha)}
+.filter-btn.active{background:var(--zhusha);color:#fff;border-color:var(--zhusha)}
+
+.section{margin-bottom:40px}
+.section-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+.section-title .badge{font-size:12px;font-weight:400;color:var(--ink2);background:var(--paper2);padding:2px 10px;border-radius:99px}
+.section-title .num{color:var(--zhusha)}
+
+.task{display:flex;gap:14px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;transition:.2s;cursor:pointer}
+.task:hover{border-color:var(--zhusha);box-shadow:0 2px 12px rgba(214,72,47,.08)}
+.task.hide{display:none}
+.checkbox{width:22px;height:22px;border:2px solid var(--line);border-radius:6px;flex-shrink:0;margin-top:2px;position:relative;transition:.2s}
+.task.done .checkbox{background:var(--green);border-color:var(--green)}
+.task.done .checkbox::after{content:"✓";position:absolute;color:#fff;font-size:14px;top:50%;left:50%;transform:translate(-50%,-50%)}
+.task-body{flex:1;min-width:0}
+.task-title{font-weight:600;font-size:15px;color:var(--ink)}
+.task.done .task-title{text-decoration:line-through;color:var(--ink2)}
+.task-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11px;padding:2px 8px;border-radius:4px;background:var(--paper2);color:var(--ink2)}
+.tag.src{background:rgba(214,72,47,.1);color:var(--zhusha)}
+.tag.user{background:rgba(185,138,47,.12);color:var(--nuanjin)}
+
+.skip-block{background:repeating-linear-gradient(45deg,var(--paper2),var(--paper2) 10px,var(--card) 10px,var(--card) 20px);border:1px dashed var(--line);border-radius:10px;padding:16px;margin-bottom:10px}
+.skip-title{font-weight:600;color:var(--ink2);font-size:14px}
+.skip-title::before{content:"⊘ ";color:var(--zhusha)}
+
+footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink2)}
+footer a{color:var(--zhusha);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+@media(max-width:640px){
+  .wrap{padding:20px 14px 60px}
+  .task{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">SHANG XIAN QUAN</span>
+  <h1>尚贤圈 · 开发待办清单</h1>
+  <p class="sub">下一轮开发宽泛范围规划。依据：用户 40 问回答 + HANDOFF-V3-FULL 第 8 章 + 开发任务总清单 + 50 问决策。本看板供后续 agent / 开发者逐项落地。</p>
+  <div class="meta">
+    <span>📅 生成：<b>2026-09-20</b></span>
+    <span>📍 贤圈中心：<b>sxcommunity.github.io/xq-center/</b></span>
+    <span>📦 <a href="../TODO.md" style="color:var(--zhusha)">源文件 TODO.md</a></span>
+  </div>
+  <div class="progress-label"><span>总进度</span><span id="pctText">0 / 0</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="pctBar" style="width:0%"></div></div>
+</header>
+
+<div class="filters">
+  <button class="filter-btn active" data-f="all">全部</button>
+  <button class="filter-btn" data-f="todo">待办</button>
+  <button class="filter-btn" data-f="done">已完成</button>
+  <button class="filter-btn" data-f="music">背景音乐</button>
+  <button class="filter-btn" data-f="center">贤圈中心</button>
+  <button class="filter-btn" data-f="content">内容沉淀</button>
+</div>
+
+<!-- 一、贤圈中心 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">一</span> 贤圈中心 · 功能开发 <span class="badge">核心</span></h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">贤圈中心已在跑，布局修复 + 方案 A 全部验收完成。本轮补全剩余模块。账号与主 App 通用。</p>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">A. 广场（信息流 + 热门帖 + 多频道聚合）</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">A1. 信息流主页面</div><div class="task-tags"><span class="tag user">用户 Q1</span><span class="tag src">HANDOFF §8.2</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">A2. 热门帖模块（热度排序：赞+评+时间衰减）</div><div class="task-tags"><span class="tag user">用户 Q1</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">A3. 多频道聚合（广场/提问/集市/失物/树洞）</div><div class="task-tags"><span class="tag user">用户 Q1</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">A4. 单页 Tab 切换架构（非多路由）</div><div class="task-tags"><span class="tag user">用户 Q7</span></div></div></div>
+  <div class="task" data-cat="center" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">A5. 帖子详情页 /post/:id（赞/评/删除）</div><div class="task-tags"><span class="tag src">HANDOFF §8.2</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">B. 集市（二手闲置 + 实物交易）</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">B1. 商品发布（标题/价格/议价/成色/图片）</div><div class="task-tags"><span class="tag src">HANDOFF §8.8</span><span class="tag user">用户 Q2</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">B2. 卡片流展示 /market + 评论询价</div><div class="task-tags"><span class="tag src">HANDOFF §8.8</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">B3. 已售出状态（标灰、不再接询价）</div><div class="task-tags"><span class="tag src">45答#15</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">B4. 平台免责声明（不介入交易）</div><div class="task-tags"><span class="tag src">HANDOFF §8.8</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">B5. 爱发电联动入口</div><div class="task-tags"><span class="tag user">用户 Q2</span><span class="tag src">HANDOFF §8.15</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">C. 提问社区</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C1. 提问发布（纯文字 标题≤50+详情≤2000+标签）</div><div class="task-tags"><span class="tag src">HANDOFF §8.3</span><span class="tag user">用户 Q3</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C2. 问题详情页 /q/:id（回答+投票+采纳）</div><div class="task-tags"><span class="tag src">HANDOFF §8.3</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C3. 回答机制（评论式平铺+有用排序）</div><div class="task-tags"><span class="tag src">HANDOFF §8.3</span></div></div></div>
+  <div class="task" data-cat="center" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">C4. 标签系统 + /tags/:tag</div><div class="task-tags"><span class="tag src">HANDOFF §8.3</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C5. 全文搜索 /search?q=</div><div class="task-tags"><span class="tag user">用户 Q10</span></div></div></div>
+  <div class="task" data-cat="center" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">C6. 关注问题 question_follows</div><div class="task-tags"><span class="tag src">HANDOFF §8.3</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C7. 问题催办（48h间隔 催后置顶24h）</div><div class="task-tags"><span class="tag src">HANDOFF §8.13</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C8. 悬赏问答（鸡腿档位 采纳后手动赠送 平台不碰钱）</div><div class="task-tags"><span class="tag src">HANDOFF §8.4</span><span class="tag src">45答#12</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">C9. 我的提问 / 我的悬赏</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">D. 鸣谢墙</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">D1. 赞助商名单（皇级当月陈列）</div><div class="task-tags"><span class="tag user">用户 Q4</span><span class="tag src">HANDOFF §8.14</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">D2. 开源依赖展示</div><div class="task-tags"><span class="tag user">用户 Q4</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">D3. 贡献者名单</div><div class="task-tags"><span class="tag user">用户 Q4</span></div></div></div>
+  <div class="task" data-cat="center" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">D4. 钻级金框头像+铭牌徽章</div><div class="task-tags"><span class="tag src">HANDOFF §8.14</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">D5. 数据同步（主库爱发电订单每小时同步）</div><div class="task-tags"><span class="tag src">HANDOFF §8.14</span></div></div></div>
+  <div class="task" data-cat="center" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">D6. 官网实时拉取鸣谢数据滚动展示</div><div class="task-tags"><span class="tag src">45答#37</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">E. 我的页面</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E1. 个人资料（昵称/头像/签名）</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E2. 发帖历史（动态/提问/集市）</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E3. 收藏</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E4. 关注（用户/问题）</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E5. 设置（通知偏好/账号/退出）</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E6. 我的悬赏</div><div class="task-tags"><span class="tag user">用户 Q5</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">E7. 钱包（到账历史）</div><div class="task-tags"><span class="tag user">用户 Q5</span><span class="tag src">50问#31</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">F. 通知系统</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">F1. 通知类型（回复/@/系统/订单）</div><div class="task-tags"><span class="tag user">用户 Q8</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">F2. 红点轮询（已完成 验证持续有效）</div><div class="task-tags"><span class="tag src">50问#8</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">F3. 桌面通知（Web Notifications API 电脑端也能获取）</div><div class="task-tags"><span class="tag user">用户 Q8</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">F4. 通知列表页 /notify</div><div class="task-tags"><span class="tag user">用户 Q8</span></div></div></div>
+
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">G. 搜索</h3>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">G1. 全局搜索栏</div><div class="task-tags"><span class="tag user">用户 Q10</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">G2. 全文检索（tsvector/ilike 覆盖帖+问+集市+失物）</div><div class="task-tags"><span class="tag user">用户 Q10</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">G3. 搜索结果页（分类Tab）</div><div class="task-tags"><span class="tag user">用户 Q10</span></div></div></div>
+</div>
+
+<!-- 二、背景音乐 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">二</span> 背景音乐接入（贤圈中心） <span class="badge">仅贤圈中心</span></h2>
+  <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">仅接入贤圈中心。音乐素材由用户后续丢给其他 agent 准备，本轮只做播放器框架 + 规格定义。</p>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M1. 播放器框架（侧边栏卡片形态）</div><div class="task-tags"><span class="tag user">用户 Q17</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M2. 控制功能（开关/音量/曲目切换/进度条）</div><div class="task-tags"><span class="tag user">用户 Q16</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M3. 播放列表（多曲目可切换歌单）</div><div class="task-tags"><span class="tag user">用户 Q14</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M4. 节奏联动（BPM 与页面动效/Lottie 联动）</div><div class="task-tags"><span class="tag user">用户 Q18</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M5. 素材接入位（预留音频目录+配置JSON）</div><div class="task-tags"><span class="tag user">用户 Q15</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M6. 自动播放策略（浏览器限制处理）</div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">M7. 持久化（曲目/音量/状态 localStorage）</div></div></div>
+</div>
+
+<!-- 三、内容沉淀 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">三</span> 内容沉淀与冷启动 <span class="badge">运营</span></h2>
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">内容沉淀</h3>
+  <div class="task" data-cat="content" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">S1. 社区 Wiki（采纳/有用≥N 自动沉淀 /kb）</div><div class="task-tags"><span class="tag user">用户 Q29</span><span class="tag src">HANDOFF §8.9</span></div></div></div>
+  <div class="task" data-cat="content" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">S2. 定期归档月刊</div><div class="task-tags"><span class="tag user">用户 Q29</span></div></div></div>
+  <div class="task" data-cat="content" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">S3. 热门合集（周/月热门合集页）</div><div class="task-tags"><span class="tag user">用户 Q29</span></div></div></div>
+  <h3 style="font-size:16px;font-weight:600;margin:18px 0 10px;color:var(--zhusha)">冷启动策略</h3>
+  <div class="task" data-cat="content" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">L1. 官方种子内容（上线前预置）</div><div class="task-tags"><span class="tag user">用户 Q27</span></div></div></div>
+  <div class="task" data-cat="content" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">L2. 定向邀请制内测（先一人验收→再开放）</div><div class="task-tags"><span class="tag user">用户 Q27</span><span class="tag src">45答#22</span></div></div></div>
+  <div class="task" data-cat="content" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">L3. 开放注册（内测通过后）</div><div class="task-tags"><span class="tag user">用户 Q27</span></div></div></div>
+  <div class="task" data-cat="content" data-status="todo"><div class="checkbox"></div><div class="task-body"><div class="task-title">L4. 校园大使内容扶持</div><div class="task-tags"><span class="tag user">用户 Q27</span></div></div></div>
+</div>
+
+<!-- 四、已完成 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">四</span> 贤圈中心已完成项 <span class="badge">2026-09-05 验收</span></h2>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">方案A：删空侧栏 统一 Bento 网格</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">renderAsk / renderThanks 结构修复</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">头像点击进个人主页</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">动态流无限滚动/分页</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">通知红点轮询</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">SW 只清缓存自注销版</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">安全审计（XSS/越权/限频三查）</div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">前端契约对齐（{ok,data} 信封 + 字段名）+ 集市/失物/通知/搜索/发布/我的子页</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">收藏 / 关注用户 / 关注问题（补丁 026 已执行）</div><div class="task-tags"><span class="tag src">E3 E4 C6</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">钱包到账历史（复用主库 rpc_public_check，待补丁 027 修复后生效）</div><div class="task-tags"><span class="tag src">E7</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">视觉精修 v3：页面标题区 / 段落竖条 / 底部导航图标 / 移动端底部抽屉修遮挡</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">天气卡可点击打开详情模态框（实况/三天/逐时/日出日落/穿衣建议）</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">AI 推荐提问全部预设回答（29 条，零 API 消耗；仅自由输入才调用 AI）</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+  <div class="task" data-cat="music" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">网易云音乐接入：扫码 / 手机验证码登录 + 推荐歌单 / 榜单 / 搜索 / 我的歌单 / 播放器（无预设曲目）</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+  <div class="task" data-cat="center" data-status="done"><div class="checkbox"></div><div class="task-body"><div class="task-title">官网：视频站内影院模式 + 鸣谢墙实时名单 + 支付区前后一致性修复</div><div class="task-tags"><span class="tag src">2026-09-22</span></div></div></div>
+</div>
+
+<!-- 五、不做 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">五</span> 明确不做 / 已舍弃 <span class="badge">红线</span></h2>
+  <div class="skip-block"><div class="skip-title">内容审核 / UGC 干预（用户：不允许做任何关于 UGC 的干预）</div></div>
+  <div class="skip-block"><div class="skip-title">暗色模式（永不加）</div></div>
+  <div class="skip-block"><div class="skip-title">视觉风格改动（已做 仅规划）</div></div>
+  <div class="skip-block"><div class="skip-title">校园官方信息源接入（学校系统没自己做的先进）</div></div>
+  <div class="skip-block"><div class="skip-title">商业化（暂不考虑）</div></div>
+  <div class="skip-block"><div class="skip-title">推广渠道（别要）</div></div>
+  <div class="skip-block"><div class="skip-title">Q19-Q26 核心功能与用户体验整段舍弃</div></div>
+  <div class="skip-block"><div class="skip-title">Q32-Q35 技术架构整段舍弃</div></div>
+  <div class="skip-block"><div class="skip-title">Q36-Q38 安全合规整段舍弃</div></div>
+</div>
+
+<!-- 六、待确认 -->
+<div class="section">
+  <h2 class="section-title"><span class="num">六</span> 待用户拍板 / 留空 <span class="badge">待定</span></h2>
+  <div class="skip-block"><div class="skip-title">版块/频道分类详细设计（用户：别瞎讲 不适合搞详细的）</div></div>
+  <div class="skip-block"><div class="skip-title">音乐素材具体曲目（用户：素材丢给其他 agent 搞）</div></div>
+  <div class="skip-block"><div class="skip-title">桌面通知技术选型确认（Web Push / Notification API 可行性）</div></div>
+</div>
+
+<footer>
+  <p>📍 贤圈中心：<a href="https://sxcommunity.github.io/xq-center/">sxcommunity.github.io/xq-center/</a> · 官网：<a href="https://kernthal.github.io/shangxianquan-official/">kernthal.github.io</a> · PWA：<a href="https://sxcommunity.github.io/sxq-pwa/">sxq-pwa</a></p>
+  <p style="margin-top:6px">📦 APK：<a href="https://gitee.com/kernthal-studio/sxcommunity/releases">Gitee Releases</a> · 爱发电：<a href="https://ifdian.net/a/kernthal-sxquan">ifdian.net/a/kernthal-sxquan</a></p>
+  <p style="margin-top:6px">📄 源文件：<a href="../TODO.md">TODO.md</a> · 交接文档：<a href="../docs/HANDOFF-V3-FULL.md">HANDOFF-V3-FULL.md</a> · 任务清单：<a href="../docs/开发任务总清单.md">开发任务总清单.md</a></p>
+  <p style="margin-top:10px;color:var(--ink2);font-size:12px">本看板由 TRAE 生成 · 2026-09-20 · 品牌规范：纸墨浅色 + 朱砂红 + 哑金 · 永不加暗色模式</p>
+</footer>
+</div>
+
+<script>
+var tasks=document.querySelectorAll('.task');
+var doneCount=0,total=0;
+tasks.forEach(function(t){
+  total++;
+  if(t.classList.contains('done'))doneCount++;
+  t.addEventListener('click',function(){
+    t.classList.toggle('done');
+    if(t.classList.contains('done'))doneCount++;else doneCount--;
+    updateProgress();
+  });
+});
+function updateProgress(){
+  var pct=Math.round(doneCount/total*100);
+  document.getElementById('pctBar').style.width=pct+'%';
+  document.getElementById('pctText').textContent=doneCount+' / '+total+' ('+pct+'%)';
+}
+updateProgress();
+
+document.querySelectorAll('.filter-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active')});
+    btn.classList.add('active');
+    var f=btn.dataset.f;
+    tasks.forEach(function(t){
+      var show=false;
+      if(f==='all')show=true;
+      else if(f==='todo')show=!t.classList.contains('done');
+      else if(f==='done')show=t.classList.contains('done');
+      else if(f==='music')show=t.dataset.cat==='music';
+      else if(f==='center')show=t.dataset.cat==='center';
+      else if(f==='content')show=t.dataset.cat==='content';
+      t.classList.toggle('hide',!show);
+    });
+  });
+});
+</script>
+</body>
+</html>

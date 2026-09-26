@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>贤圈中心 · 尚贤圈</title>
+  <meta name="description" content="贤圈中心：日常动态、专属提问、学业互助——桂林市尚贤学校校园社区。" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta name="theme-color" content="#f7f6f2" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="./assets/style.css?v=1790421697710" />
+  <!-- 尚贤圈 · Lottie 动画与智能客服（本地资源） -->
+  <link rel="stylesheet" href="./assets/sxq/sxq-lottie.css" />
+  <link rel="stylesheet" href="./assets/sxq/sxq-nav.css" />
+  <link rel="stylesheet" href="./assets/sxq/sxq-ai-chat.css" />
+  <style>
+    .sxq-load{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,24px);background:#f7f6f2;transition:opacity .45s ease,visibility .45s ease;padding:4vh 4vw;box-sizing:border-box}
+    .sxq-load.sxq-load-hide{opacity:0;visibility:hidden}
+    .sxq-load-fx{width:min(62vmin,520px);height:min(62vmin,520px);max-width:92vw;max-height:62vh;-webkit-mask-image:radial-gradient(closest-side,#000 66%,transparent 100%);mask-image:radial-gradient(closest-side,#000 66%,transparent 100%)}
+    .sxq-load-hello{width:min(56vw,420px);height:auto;aspect-ratio:500/150;max-height:24vh}
+    .sxq-load-txt{font-size:clamp(13px,2vmin,19px);letter-spacing:clamp(4px,1.2vw,8px);color:#d6482f}
+    @media(max-width:640px){
+      .sxq-load-fx{width:min(78vw,400px);height:min(78vw,400px);-webkit-mask-image:radial-gradient(closest-side,#000 66%,transparent 100%);mask-image:radial-gradient(closest-side,#000 66%,transparent 100%)}
+      .sxq-load-hello{width:min(74vw,300px)}
+    }
+    .drawer .sxq-hint{font-size:12px;color:#8a8580;margin:2px 0 6px;line-height:1.6}
+    .drawer .sxq-menu{margin:6px 0 4px}
+  </style>
+</head>
+<body>
+  <!-- 首屏加载动画 -->
+  <div class="sxq-load" id="sxqLoad" aria-hidden="true">
+    <span class="sxq-lottie sxq-load-fx" data-lottie="loading" data-lottie-autoplay></span>
+    <span class="sxq-lottie sxq-load-hello" data-lottie="hello" data-lottie-autoplay></span>
+    <div class="sxq-load-txt">贤圈中心</div>
+  </div>
+
+  <div id="app">
+
+    <!-- ═══ 左侧导航（PC 三栏布局的左栏，≥1024px 才显示） ═══ -->
+    <aside class="xq-nav">
+      <div class="xq-nav-brand">
+        <span class="hd-seal">贤</span>
+        <span class="xq-nav-bt"><b>贤圈中心</b><small>SHANG XIAN QUAN</small></span>
+      </div>
+
+      <nav class="xq-nav-list">
+        <a data-nav="feed" class="on">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><path d="M12 3.2l8.6 7.4h-2.7v9.4h-4.4v-5.8h-3v5.8H6.1v-9.4H3.4L12 3.2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>广场</span>
+        </a>
+        <a data-nav="market">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><path d="M4.2 8h15.6l-1.1 12.2H5.3L4.2 8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 8.4V6.2a3 3 0 116 0v2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>集市</span>
+        </a>
+        <a data-nav="lost">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.6v5l3 1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>失物</span>
+        </a>
+        <a data-nav="ask">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><circle cx="12" cy="12" r="8.8" stroke="currentColor" stroke-width="1.7"/><path d="M9.6 9.2a2.5 2.5 0 015 0c0 1.6-2.5 2-2.5 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 16.4h.01" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
+          <span>提问</span>
+        </a>
+        <a data-nav="thanks">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><path d="M12 3.6l2.5 5.1 5.6.8-4.1 4 1 5.6-5-2.7-5 2.7 1-5.6-4.1-4 5.6-.8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span>鸣谢</span>
+        </a>
+      </nav>
+
+      <button class="xq-nav-pub" id="sidePublish">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        发布
+      </button>
+
+      <a class="xq-nav-side" href="https://kernthal.github.io/shangxianquan-official/corridor/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 20v-6h6v6" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>走廊</span>
+      </a>
+
+      <div class="xq-nav-foot">
+        <a data-nav="me" class="xq-nav-me" id="sideMe">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none"><circle cx="12" cy="8.4" r="3.7" stroke="currentColor" stroke-width="1.7"/><path d="M4.6 20.2a7.4 7.4 0 0114.8 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>我的</span>
+        </a>
+        <div class="xq-nav-links">
+          <a href="https://kernthal.github.io/shangxianquan-official/" target="_blank" rel="noopener">官网</a>
+          <span>·</span>
+          <a href="https://ifdian.net/a/kernthal-sxquan" target="_blank" rel="noopener">爱发电</a>
+        </div>
+        <span class="xq-nav-ver" id="sideVer"></span>
+      </div>
+    </aside>
+
+    <!-- 顶栏 -->
+    <header class="hd">
+      <div class="hd-in">
+        <div class="hd-brand" data-nav="feed">
+          <span class="hd-seal">贤</span>
+          <span class="hd-name">贤圈中心</span>
+        </div>
+        <nav class="hd-nav">
+          <a data-nav="feed" class="on">广场</a>
+          <a data-nav="market">集市</a>
+          <a data-nav="lost">失物</a>
+          <a data-nav="ask">提问</a>
+          <a data-nav="thanks">鸣谢</a>
+          <a data-nav="me">我的</a>
+        </nav>
+        <div class="hd-user" id="hdUser"></div>
+        <button class="burger" id="burger" aria-label="菜单">
+          <span class="bl l1"></span><span class="bl l2"></span><span class="bl l3"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 抽屉导航 -->
+    <div class="drawer-mask" id="drawerMask" hidden></div>
+    <nav class="drawer" id="drawer" hidden>
+      <div class="drawer-head"><span class="hd-seal">贤</span><span>贤圈中心</span></div>
+      <p class="sxq-hint">悬停查看动效，点击进入对应页面。</p>
+      <div class="sxq-menu" data-sxq-menu='[
+        {"label":"广场","nav":"feed","icon":"◈"},
+        {"label":"集市","nav":"market","icon":"⌂"},
+        {"label":"失物","nav":"lost","icon":"◎"},
+        {"label":"提问","nav":"ask","icon":"？"},
+        {"label":"鸣谢","nav":"thanks","icon":"❀"},
+        {"label":"我的","nav":"me","icon":"◍"}
+      ]'></div>
+      <div class="drawer-foot">全实名 · 友善交流</div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main id="main"></main>
+
+    <!-- 发布球（PC） -->
+    <button class="fab" id="fab" title="发布">＋</button>
+
+    <!-- 底部导航（移动端） -->
+    <nav class="tabbar">
+      <a data-nav="feed" class="on">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none"><path d="M12 3.2l8.6 7.4h-2.7v9.4h-4.4v-5.8h-3v5.8H6.1v-9.4H3.4L12 3.2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>广场</span>
+      </a>
+      <a data-nav="market">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none"><path d="M4.2 8h15.6l-1.1 12.2H5.3L4.2 8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 8.4V6.2a3 3 0 116 0v2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>集市</span>
+      </a>
+      <button class="tab-plus" id="tabPlus" title="发布"><span>＋</span></button>
+      <a data-nav="ask">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none"><circle cx="12" cy="12" r="8.8" stroke="currentColor" stroke-width="1.7"/><path d="M9.6 9.2a2.5 2.5 0 015 0c0 1.6-2.5 2-2.5 3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 16.4h.01" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg>
+        <span>提问</span>
+      </a>
+      <a data-nav="me" id="tabMe">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none"><circle cx="12" cy="8.4" r="3.7" stroke="currentColor" stroke-width="1.7"/><path d="M4.6 20.2a7.4 7.4 0 0114.8 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>我的</span>
+      </a>
+    </nav>
+
+    <!-- 登录浮层 -->
+    <div class="mask" id="authMask" hidden>
+      <div class="auth-card">
+        <div class="auth-seal">贤</div>
+        <div class="auth-title" id="authTitle">登录贤圈中心</div>
+        <div class="auth-sub">使用尚贤圈 App 账号（同一账号体系），贤圈ID 自动关联</div>
+        <input class="ipt" id="authEmail" type="email" placeholder="邮箱" autocomplete="email" />
+        <input class="ipt" id="authPass" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password" />
+        <div id="authCodeRow" hidden>
+          <input class="ipt" id="authCode" inputmode="numeric" maxlength="6" placeholder="邮箱验证码（6 位）" />
+        </div>
+        <button class="btn btn-primary" id="authSubmit">登录</button>
+        <div class="auth-or">—— 或 ——</div>
+        <button class="btn oauth-btn" id="oauthBtn">用尚贤圈 App 账号一键登录</button>
+        <div class="auth-switch"><a id="authModeBtn">注册新账号</a> · <a id="authForgot">忘记密码</a></div>
+        <button class="auth-close" id="authClose">暂不登录，先看看</button>
+      </div>
+    </div>
+
+    <!-- 通用弹层（详情 / 发布 / 通知 / 搜索 / 图片放大） -->
+    <div class="layer" id="layer" hidden></div>
+
+    <!-- 底栏 -->
+    <footer class="ftbar">
+      <a href="https://kernthal.github.io/shangxianquan-official/" target="_blank" rel="noopener">尚贤圈官网</a>
+      <span>· 桂林市尚贤学校校园社区 ·</span>
+      <a href="https://ifdian.net/a/kernthal-sxquan" target="_blank" rel="noopener">爱发电支持</a>
+      <span class="ft-ver" id="ftVer"></span>
+    </footer>
+
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <script src="./assets/vendor/supabase.js"></script>
+  <script src="./assets/vendor/qrcode.min.js"></script>
+  <script src="./assets/app.js?v=1790421697710"></script>
+  <script src="./assets/liquid-glass.js?v=1790421697710"></script>
+  <script src="./assets/music.js?v=1790421697710"></script>
+
+  <!-- 尚贤圈 · Lottie 运行时 + 智能客服（本地资源） -->
+  <script>
+    window.SXQ_LOTTIE_BASE = './assets/lottie/';
+    window.SXQ_LOTTIE_VENDOR = './assets/vendor/lottie.min.js';
+    window.SXQ_AI = {
+      title: '贤圈中心 · 智能客服',
+      email: 'sxcommunity@outlook.com',
+      faq: ['怎么发布动态？', '集市怎么用？', '提问区怎么提问？', '怎么登录？', '鸣谢名单是什么？']
+    };
+  </script>
+  <script src="./assets/sxq/sxq-lottie.js"></script>
+  <script src="./assets/sxq/sxq-nav.js"></script>
+  <script src="./assets/sxq/sxq-ai-chat.js"></script>
+  <script>
+    (function () {
+      // 首屏加载动画：至少展示 2.2 秒，最多 8 秒兜底
+      var t0 = Date.now(), done = false;
+      function hideLoad () {
+        if (done) return;
+        done = true;
+        var el = document.getElementById('sxqLoad');
+        if (!el) return;
+        var wait = Math.max(0, 2200 - (Date.now() - t0));
+        setTimeout(function () {
+          el.classList.add('sxq-load-hide');
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
+        }, wait);
+      }
+      if (document.readyState === 'complete') hideLoad();
+      else window.addEventListener('load', hideLoad);
+      setTimeout(hideLoad, 8000);
+    })();
+  </script>
+</body>
+</html>
