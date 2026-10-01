@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>账号授权 · 贤圈中心</title>
+  <meta name="theme-color" content="#f7f6f2" />
+  <link rel="icon" href="./assets/icons/icon-192.png" />
+  <style>
+    :root { --paper:#f7f6f2; --card:#fff; --ink:#23262b; --ink-2:#5f636d; --ink-3:#9a9da6;
+      --line:#e9e6df; --red:#d6482f; --gold:#b98a2f; --gold-soft:rgba(185,138,47,.12); }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { min-height:100vh; background:var(--paper); color:var(--ink);
+      font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+      display:flex; align-items:center; justify-content:center; padding:16px;
+      -webkit-font-smoothing:antialiased; }
+    .box { background:var(--card); border:1px solid var(--line); border-radius:22px;
+      width:100%; max-width:420px; padding:30px 28px; box-shadow:0 24px 60px rgba(31,28,24,.14);
+      animation:pop .4s cubic-bezier(.2,.8,.3,1.1) both; }
+    @keyframes pop { from{opacity:0;transform:scale(.95) translateY(10px)} to{opacity:1;transform:none} }
+    .seal { width:52px; height:52px; border-radius:14px; background:var(--red); color:#fff;
+      display:grid; place-items:center; font-size:26px; font-weight:800; margin:0 auto 14px;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.25),0 8px 20px rgba(214,72,47,.3); }
+    h1 { text-align:center; font-size:18px; font-weight:800; }
+    .sub { text-align:center; color:var(--ink-3); font-size:12px; line-height:1.8; margin:8px 0 18px; }
+    .ipt { width:100%; border:1px solid var(--line); background:#fbfaf7; border-radius:12px;
+      padding:12px 14px; font-size:14px; color:var(--ink); outline:none; margin-bottom:10px;
+      font-family:inherit; transition:border .2s, box-shadow .2s; }
+    .ipt:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(214,72,47,.08); }
+    .btn { width:100%; border:none; background:var(--red); color:#fff; border-radius:999px;
+      padding:12px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;
+      transition:all .25s; }
+    .btn:hover { filter:brightness(.95); transform:translateY(-1px); }
+    .btn.gold { background:#fffdf7; color:var(--gold); border:1px solid rgba(185,138,47,.5); }
+    .btn.ghost { background:none; border:none; color:var(--ink-3); font-size:13px; }
+    .row { display:flex; gap:10px; margin-top:4px; }
+    .row .btn { flex:1; }
+    .app-card { border:1px solid var(--line); background:#fbfaf7; border-radius:14px;
+      padding:16px; margin-bottom:14px; line-height:1.8; font-size:13px; color:var(--ink-2); }
+    .app-card b { color:var(--ink); }
+    .scopes { margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+    .scopes span { font-size:11px; color:var(--gold); background:var(--gold-soft);
+      border:1px solid rgba(185,138,47,.3); border-radius:999px; padding:3px 10px; }
+    .msg { text-align:center; font-size:13px; color:var(--ink-2); line-height:1.9; padding:12px 0; }
+    .err { text-align:center; font-size:12px; color:var(--red); min-height:16px; margin-top:8px; }
+    .foot { margin-top:16px; text-align:center; font-size:11px; color:var(--ink-3); line-height:1.8; }
+  </style>
+</head>
+<body>
+  <div class="box" id="box">
+    <div class="seal">贤</div>
+    <div id="stage"><div class="msg">加载中…</div></div>
+    <div class="err" id="err"></div>
+    <div class="foot">桂林市尚贤学校 · 贤圈中心<br />仅在你本人操作时完成授权，随时可拒绝</div>
+  </div>
+
+  <script src="./assets/vendor/supabase.js"></script>
+  <script>
+  'use strict'
+  // 授权页：App 账号（主库）登录 → 同意/拒绝 → 回到贤圈中心登录流程
+  const MAIN_URL = 'https://gfxkpljewqchdbrepqia.supabase.co'
+  const MAIN_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdmeGtwbGpld3FjaGRicmVwcWlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MjA2NDIsImV4cCI6MjEwMzE5NjY0Mn0.VWr_iNA25QTviaFiwYMvTV43ZK3I7kEKXSYO5jHZrBY'
+  const sbMain = supabase.createClient(MAIN_URL, MAIN_ANON, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  })
+
+  const $ = (id) => document.getElementById(id)
+  const stage = () => $('stage')
+  const showErr = (m) => { $('err').textContent = m || '' }
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+  function loginView() {
+    stage().innerHTML = `
+      <h1>登录尚贤圈账号</h1>
+      <div class="sub">第三方应用「贤圈中心」请求访问你的账号。<br />请先用 App 的账号密码登录以继续授权。</div>
+      <input class="ipt" id="cEmail" type="email" placeholder="邮箱" autocomplete="email" />
+      <input class="ipt" id="cPass" type="password" placeholder="密码" autocomplete="current-password" />
+      <button class="btn" id="cLogin">登录并继续</button>
+      <div class="sub" style="margin-top:14px">没有账号？请在尚贤圈 App 内注册</div>`
+    $('cPass').onkeydown = (e) => { if (e.key === 'Enter') $('cLogin').click() }
+    $('cLogin').onclick = async () => {
+      const email = $('cEmail').value.trim().toLowerCase()
+      const pass = $('cPass').value
+      if (!email || !pass) { showErr('请填写邮箱和密码'); return }
+      $('cLogin').textContent = '登录中…'
+      const { error } = await sbMain.auth.signInWithPassword({ email, password: pass })
+      if (error) { showErr(error.message || '登录失败'); $('cLogin').textContent = '登录并继续'; return }
+      await enterConsent()
+    }
+  }
+
+  async function enterConsent() {
+    const authId = new URLSearchParams(location.search).get('authorization_id')
+    if (!authId) { stage().innerHTML = `<div class="msg">缺少授权参数。<br />请回到贤圈中心重新点击登录。</div>`; return }
+    let d
+    let lastErr = null
+    for (let i = 0; i < 3; i++) {
+      try {
+        d = await gotrue('GET', '/oauth/authorizations/' + authId)
+        break
+      } catch (e) {
+        lastErr = e
+        await new Promise((res) => setTimeout(res, 600 * (i + 1)))
+      }
+    }
+    if (!d) {
+      stage().innerHTML = `<div class="msg">授权信息读取失败（已自动重试 3 次）：<br />${esc(lastErr && lastErr.message || '')}<br /><br /><a href="https://sxcommunity.github.io/xq-center/" style="color:var(--red)">返回贤圈中心</a></div>`
+      return
+    }
+    // 老用户：此前已同意过，GoTrue 自动批准并直接下发回跳地址 → 免二次确认
+    if (d.redirect_url) {
+      stage().innerHTML = `<div class="msg">你已授权过，正在返回登录…</div>`
+      setTimeout(() => { location.href = d.redirect_url }, 500)
+      return
+    }
+    const scopes = String((d && d.scope) || 'openid email profile').split(/\s+/).filter(Boolean)
+    stage().innerHTML = `
+      <h1>授权确认</h1>
+      <div class="app-card">
+        应用 <b>贤圈中心（尚贤圈网站）</b> 请求访问你的尚贤圈账号。<br />
+        授权后将使用同一账号体系的昵称、贤圈ID 与会员状态。
+        <div class="scopes">${scopes.map((s) => `<span>${esc(s)}</span>`).join('')}</div>
+      </div>
+      <div class="row">
+        <button class="btn gold" id="cDeny">拒绝</button>
+        <button class="btn" id="cApprove">同意授权</button>
+      </div>`
+    $('cDeny').onclick = async () => {
+      $('cDeny').textContent = '处理中…'
+      try { await gotrue('POST', '/oauth/authorizations/' + authId + '/consent', { action: 'deny' }) } catch (e) { /* 拒绝失败忽略 */ }
+      stage().innerHTML = `<div class="msg">已拒绝。你可以关闭本页，<br />或回到贤圈中心改用邮箱密码登录。</div>`
+    }
+    $('cApprove').onclick = async () => {
+      $('cApprove').textContent = '授权中…'
+      try {
+        const d2 = await gotrue('POST', '/oauth/authorizations/' + authId + '/consent', { action: 'approve' })
+        // GoTrue 批准后返回 redirect_url（带授权码的新库回调），手动跳转完成登录
+        const to = d2 && (d2.redirect_url || d2.redirect_to)
+        stage().innerHTML = `<div class="msg">授权成功，正在返回登录…</div>`
+        if (to) {
+          setTimeout(() => { location.href = to }, 300)
+          return
+        }
+        setTimeout(() => {
+          stage().innerHTML = `
+            <div class="msg">授权已完成，但未收到自动回跳指令。<br />请把下方内容发给维护者：</div>
+            <pre style="text-align:left;font-size:11px;background:#fbfaf7;border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:160px">${esc(JSON.stringify(d2))}</pre>
+            <a class="btn gold" style="display:block;text-decoration:none;margin-top:12px" href="https://sxcommunity.github.io/xq-center/">返回贤圈中心</a>`
+        }, 3000)
+      } catch (e) {
+        showErr(e.message || '授权失败')
+        $('cApprove').textContent = '同意授权'
+      }
+    }
+  }
+
+  // 原生 GoTrue 调用：显式带 apikey + 登录令牌
+  // （新版 supabase-js 的 oauth 方法在已登录请求里缺 apikey 头，GoTrue /oauth/* 强制要求）
+  async function gotrue(method, path, body) {
+    const { data: sdata } = await sbMain.auth.getSession()
+    const jwt = sdata && sdata.session ? sdata.session.access_token : ''
+    const r = await fetch(MAIN_URL + '/auth/v1' + path, {
+      method,
+      headers: {
+        apikey: MAIN_ANON,
+        Authorization: 'Bearer ' + jwt,
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    })
+    const d = await r.json()
+    if (!r.ok) {
+      const msg = d.message || d.error_description || ('HTTP ' + r.status)
+      throw new Error(msg)
+    }
+    return d
+  }
+
+  ;(async () => {
+    try {
+      const { data } = await sbMain.auth.getSession()
+      if (data && data.session) await enterConsent()
+      else loginView()
+    } catch (e) { loginView() }
+  })()
+  </script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+/*!
+ * 尚贤圈音乐模块 · 独立样式系统  music-ui.css
+ * ─────────────────────────────────────────────────────────────
+ * 为什么要独立一个文件（2026-10-01）：
+ *   原来音乐样式全塞在 style.css（163KB）里，和站内其它样式混在一起，
+ *   改一处不知道会影响谁。现在把音乐模块单独成文件，边界清楚。
+ *
+ * 学习来源（真抓过，不是凭印象）：
+ *   · 网易云网页版 core.css / pt_frame.css：
+ *     `g-btmbar{position:fixed;bottom:0;left:0;right:0;display:flex;flex-direction:column}`
+ *     —— 播放条与「上方播放列表」挂在同一个 column 容器里，这就是**两层结构**的正确做法
+ *     结构分解：封面 / 控制 / 进度 / 音量 / 播放列表 五个分区
+ *   · 网易云的图标用雪碧图 + IE6 hack（`_position`），这部分**不学**，太旧
+ *
+ * 设计原则（本模块自己的）：
+ *   1. 一套尺度，不许各处发明数字 —— 全部走下面 :root 的令牌
+ *   2. 缓动统一 —— 所有交互用同一条曲线，不许各处写 feel
+ *   3. 底色跟随站内三套主题（用户选：米白），不单独做暗色
+ *   4. 电脑优先
+ */
+
+/* ═══════════ 令牌 ═══════════ */
+.mus-scope,
+.mus-scope *{
+  /* 尺度：4 的倍数，避免出现 13px / 19px 这种随手数字 */
+  --m-1:4px;  --m-2:8px;  --m-3:12px; --m-4:16px;
+  --m-5:20px; --m-6:24px; --m-7:32px; --m-8:40px; --m-9:56px;
+
+  /* 圆角 */
+  --r-xs:6px; --r-sm:9px; --r-md:12px; --r-lg:16px; --r-xl:22px; --r-pill:999px;
+
+  /* 层次阴影：三级，别到处写 blur 值 */
+  --sh-1:0 1px 2px rgba(31,28,24,.06), 0 2px 6px rgba(31,28,24,.05);
+  --sh-2:0 4px 14px rgba(31,28,24,.09), 0 1px 3px rgba(31,28,24,.06);
+  --sh-3:0 16px 44px rgba(31,28,24,.16), 0 4px 12px rgba(31,28,24,.08);
+
+  /* 动效：统一三条曲线 + 三个时长 */
+  --e-out:cubic-bezier(.16,1,.3,1);
+  --e-inout:cubic-bezier(.65,0,.35,1);
+  --e-snap:cubic-bezier(.22,1,.36,1);
+  --d-fast:140ms;
+  --d-mid:240ms;
+  --d-slow:420ms;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   一、底部播放条 · 两层结构（用户选）
+   下层 = 控制条（固定 72px）；上层 = 队列浮层（向上展开）
+   ═══════════════════════════════════════════════════════════ */
+.mpb{
+  position:fixed; left:0; right:0; bottom:0; z-index:1002;
+  display:flex; flex-direction:column;               /* 关键：column，让上层能往上堆 */
+  pointer-events:none;
+}
+.mpb > *{ pointer-events:auto }
+
+/* ── 下层：主控制条 ── */
+.mpb-main{
+  height:72px;
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(320px,2fr) minmax(180px,1fr);
+  align-items:center;
+  gap:var(--m-5,20px);
+  padding:0 clamp(12px,2vw,22px);
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  border-top:1px solid var(--line);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  backdrop-filter:blur(18px) saturate(1.6);
+  box-shadow:0 -8px 28px rgba(31,28,24,.07);
+}
+
+/* 左：封面 + 歌名歌手 + 收藏 */
+.mpb-l{ display:flex; align-items:center; gap:var(--m-3,12px); min-width:0 }
+.mpb-cover{
+  width:46px; height:46px; border-radius:var(--r-sm,9px); flex:0 0 auto;
+  background:var(--paper2) center/cover no-repeat;
+  box-shadow:var(--sh-1); position:relative; overflow:hidden;
+}
+/* 封面上的播放小罩（悬停出现） */
+.mpb-cover::after{
+  content:""; position:absolute; inset:0; background:rgba(20,18,16,.42);
+  opacity:0; transition:opacity var(--d-fast) var(--e-out);
+}
+.mpb-l:hover .mpb-cover::after{ opacity:1 }
+.mpb-meta{ min-width:0; flex:1 }
+.mpb-meta b{
+  display:block; font-size:13.5px; font-weight:800; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.mpb-meta span{
+  display:block; font-size:11.5px; color:var(--ink-3); margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* 歌名过长：跑马灯 */
+.mpb-meta b.mq{ display:block; overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,#000 84%,transparent);
+  mask-image:linear-gradient(90deg,#000 84%,transparent); }
+.mpb-meta b.mq i{ display:inline-block; font-style:normal; padding-right:46px;
+  animation:mpbMq 15s linear infinite; }
+@keyframes mpbMq{ from{ transform:translateX(0) } to{ transform:translateX(-50%) } }
+
+/* 中：进度（细线贴顶）+ 控制键 */
+.mpb-mid{ display:flex; flex-direction:column; gap:2px; align-items:center; justify-content:center }
+.mpb-ctl{ display:flex; align-items:center; gap:var(--m-3,12px) }
+.mpb-btn{
+  width:34px; height:34px; border:none; background:transparent; border-radius:50%;
+  color:var(--ink-2); cursor:pointer; display:grid; place-items:center;
+  transition:all var(--d-fast) var(--e-out); font-family:inherit;
+}
+.mpb-btn:hover{ background:rgba(20,18,16,.06); color:var(--ink) }
+.mpb-btn:active{ transform:scale(.92) }
+.mpb-btn svg{ width:19px; height:19px }
+.mpb-play{
+  width:42px; height:42px; background:var(--red); color:#fff;
+  box-shadow:0 4px 14px rgba(214,72,47,.32);
+}
+.mpb-play:hover{ background:#e2573c; color:#fff; transform:scale(1.05) }
+.mpb-play svg{ width:21px; height:21px }
+
+/* ── 上层：队列浮层 ── */
+.mpb-queue{
+  max-height:0; overflow:hidden;
+  transition:max-height var(--d-slow) var(--e-out);
+  background:color-mix(in srgb, var(--paper) 96%, transparent);
+  border-top:1px solid var(--line);
+  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+}
+.mpb.open .mpb-queue{ max-height:min(52vh,420px) }
+.mpb-queue-in{ display:grid; grid-template-columns:1fr 300px; height:min(52vh,420px) }
+
+/* 队列列表区 */
+.mpb-q-list{ display:flex; flex-direction:column; min-height:0; border-right:1px solid var(--line) }
+.mpb-q-hd{
+  display:flex; align-items:center; gap:var(--m-3,12px);
+  padding:var(--m-3,12px) var(--m-4,16px); border-bottom:1px solid var(--line);
+  flex:0 0 auto;
+}
+.mpb-q-hd b{ font-size:13.5px; font-weight:900; color:var(--ink) }
+.mpb-q-hd span{ font-family:var(--mono,monospace); font-size:11.5px; color:var(--ink-3) }
+.mpb-q-hd .sp{ flex:1 }
+.mpb-q-search{
+  flex:0 0 auto; display:flex; align-items:center; gap:6px;
+  margin:var(--m-2,8px) var(--m-4,16px) var(--m-1,4px);
+  padding:0 10px; border:1px solid var(--line); border-radius:var(--r-sm,9px);
+  background:var(--paper2); transition:border-color var(--d-fast) var(--e-out);
+}
+.mpb-q-search:focus-within{ border-color:var(--red) }
+.mpb-q-search input{
+  flex:1; min-width:0; border:none; background:transparent; outline:none;
+  font-family:inherit; font-size:12.5px; color:var(--ink); padding:8px 0;
+}
+.mpb-q-rows{ flex:1; min-height:0; overflow:auto; padding:var(--m-2,8px) var(--m-2,8px) var(--m-4,16px) }
+.mpb-q-row{
+  display:flex; align-items:center; gap:var(--m-3,12px);
+  width:100%; text-align:left; border:none; background:transparent;
+  font-family:inherit; color:inherit; padding:7px 10px;
+  border-radius:var(--r-sm,9px); cursor:pointer;
+  transition:background var(--d-fast) var(--e-out);
+}
+.mpb-q-row:hover{ background:var(--paper2) }
+.mpb-q-row.on{ background:rgba(214,72,47,.09) }
+.mpb-q-row.on .n{ color:var(--red) }
+.mpb-q-row .n{
+  flex:0 0 auto; width:24px; text-align:right;
+  font-family:var(--mono,monospace); font-size:11.5px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums;
+}
+.mpb-q-row .t{ flex:1; min-width:0 }
+.mpb-q-row .t b{ display:block; font-size:12.8px; font-weight:700; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.mpb-q-row .t span{ display:block; font-size:11px; color:var(--ink-3); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.mpb-q-row .d{ flex:0 0 auto; font-family:var(--mono,monospace); font-size:11px; color:var(--ink-3) }
+.mpb-q-row .x{
+  flex:0 0 auto; width:22px; height:22px; border:none; background:transparent;
+  color:var(--ink-3); font-size:14px; border-radius:50%; cursor:pointer;
+  opacity:0; transition:all var(--d-fast) var(--e-out);
+}
+.mpb-q-row:hover .x{ opacity:1 }
+.mpb-q-row .x:hover{ background:rgba(214,72,47,.12); color:var(--red) }
+.mpb-q-row .g{ flex:0 0 auto; width:14px; color:var(--ink-3); opacity:.4; cursor:grab; font-size:11px }
+.mpb-q-row.dragging{ opacity:.35 }
+.mpb-q-row.qover{ box-shadow:inset 0 2px 0 var(--red) }
+
+/* 队列右栏：当前歌信息 */
+.mpb-q-side{ padding:var(--m-5,20px); display:flex; flex-direction:column; gap:var(--m-4,16px) }
+.mpb-q-side .cov{
+  width:100%; aspect-ratio:1; border-radius:var(--r-md,12px);
+  background:var(--paper2) center/cover no-repeat; box-shadow:var(--sh-2);
+}
+.mpb-q-side h4{ font-size:15px; font-weight:900; color:var(--ink) }
+.mpb-q-side p{ font-size:12px; color:var(--ink-3); line-height:1.7 }
+
+/* ═══════════════════════════════════════════════════════════
+   二、歌曲列表 · 宽松带封面（用户选）
+   ═══════════════════════════════════════════════════════════ */
+.msl{ display:flex; flex-direction:column; gap:2px }
+.msl-row{
+  display:flex; align-items:center; gap:var(--m-4,16px);
+  padding:10px var(--m-4,16px); border-radius:var(--r-md,12px);
+  cursor:pointer; transition:background var(--d-fast) var(--e-out);
+  position:relative;
+}
+.msl-row:hover{ background:var(--paper2) }
+.msl-row.on{ background:rgba(214,72,47,.08) }
+.msl-row.on .msl-n{ color:var(--red) }
+
+/* 序号 / 播放键（悬停互换） */
+.msl-n{
+  flex:0 0 auto; width:30px; text-align:center; position:relative;
+  font-family:var(--mono,monospace); font-size:12.5px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums;
+}
+.msl-n i{
+  position:absolute; inset:0; display:grid; place-items:center;
+  font-style:normal; font-size:13px; color:var(--red);
+  opacity:0; transition:opacity var(--d-fast) var(--e-out);
+}
+.msl-row:hover .msl-n i{ opacity:1 }
+.msl-row:hover .msl-n b{ opacity:.25 }
+
+/* 封面缩略图 */
+.msl-cov{
+  flex:0 0 auto; width:44px; height:44px; border-radius:var(--r-sm,9px);
+  background:var(--paper2) center/cover no-repeat; box-shadow:var(--sh-1);
+}
+
+/* 标题区 */
+.msl-t{ flex:1; min-width:0 }
+.msl-t b{
+  display:block; font-size:13.6px; font-weight:700; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.msl-t span{
+  display:block; font-size:11.5px; color:var(--ink-3); margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.msl-row.on .msl-t b{ color:var(--red) }
+
+/* 专辑（宽屏才显示） */
+.msl-al{
+  flex:0 0 22%; font-size:11.8px; color:var(--ink-3);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+@media(max-width:1100px){ .msl-al{ display:none } }
+
+/* 音质标识 */
+.msl-q{
+  flex:0 0 auto; font-family:var(--mono,monospace); font-size:10px; font-weight:800;
+  letter-spacing:.06em; padding:2px 6px; border-radius:var(--r-xs,6px);
+  border:1px solid var(--line); color:var(--ink-3); text-transform:uppercase;
+}
+.msl-q.hi{ border-color:rgba(185,138,47,.5); color:var(--gold); background:rgba(185,138,47,.08) }
+.msl-q.sq{ border-color:rgba(214,72,47,.45); color:var(--red); background:rgba(214,72,47,.07) }
+
+.msl-d{ flex:0 0 auto; font-family:var(--mono,monospace); font-size:11.5px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums }
+
+/* 当前播放：跳动律动条 */
+.msl-wave{ flex:0 0 auto; display:flex; align-items:flex-end; gap:2px; height:14px; width:16px }
+.msl-wave i{
+  display:block; width:2.5px; background:var(--red); border-radius:1px;
+  animation:mslWave .9s var(--e-inout) infinite;
+}
+.msl-wave i:nth-child(1){ height:40%; animation-delay:0s }
+.msl-wave i:nth-child(2){ height:85%; animation-delay:.16s }
+.msl-wave i:nth-child(3){ height:55%; animation-delay:.32s }
+@keyframes mslWave{ 0%,100%{ transform:scaleY(.35) } 50%{ transform:scaleY(1) } }
+.msl-row:not(.playing) .msl-wave i{ animation-play-state:paused; transform:scaleY(.3) }
+
+/* 悬停操作区 */
+.msl-act{ flex:0 0 auto; display:flex; align-items:center; gap:4px;
+  opacity:0; transition:opacity var(--d-fast) var(--e-out) }
+.msl-row:hover .msl-act{ opacity:1 }
+.msl-act button{
+  width:28px; height:28px; border:none; background:transparent; border-radius:50%;
+  color:var(--ink-3); cursor:pointer; display:grid; place-items:center;
+  transition:all var(--d-fast) var(--e-out);
+}
+.msl-act button:hover{ background:rgba(20,18,16,.07); color:var(--red) }
+.msl-act button.on{ color:var(--red) }
+.msl-act svg{ width:15px; height:15px }
+
+/* ═══════════════════════════════════════════════════════════
+   三、空态与骨架
+   ═══════════════════════════════════════════════════════════ */
+.msk{ display:flex; align-items:center; gap:var(--m-4,16px); padding:10px var(--m-4,16px) }
+.msk-c{ width:44px; height:44px; border-radius:var(--r-sm,9px); flex:0 0 auto;
+  background:linear-gradient(90deg,var(--paper2),var(--paper),var(--paper2));
+  background-size:200% 100%; animation:mskRun 1.4s linear infinite }
+.msk-l{ flex:1; display:flex; flex-direction:column; gap:7px }
+.msk-l i{ display:block; height:11px; border-radius:6px;
+  background:linear-gradient(90deg,var(--paper2),var(--paper),var(--paper2));
+  background-size:200% 100%; animation:mskRun 1.4s linear infinite }
+.msk-l i:first-child{ width:52% } .msk-l i:last-child{ width:30% }
+@keyframes mskRun{ from{ background-position:200% 0 } to{ background-position:-200% 0 } }
+
+.mempty{
+  padding:var(--m-9,56px) var(--m-6,24px); text-align:center;
+  color:var(--ink-3); font-size:13.5px; line-height:2;
+}
+.mempty b{ display:block; font-size:15px; font-weight:800; color:var(--ink-2); margin-bottom:var(--m-2,8px) }
+.mempty button{
+  margin-top:var(--m-4,16px); border:none; border-radius:var(--r-pill,999px);
+  padding:10px 24px; background:var(--red); color:#fff;
+  font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;
+  transition:all var(--d-fast) var(--e-out);
+}
+.mempty button:hover{ background:#e2573c; transform:translateY(-1px) }
+
+/* ═══════════════════════════════════════════════════════════
+   四、右键菜单（重做版：更紧凑、有图标列）
+   ═══════════════════════════════════════════════════════════ */
+.mctx{
+  position:fixed; z-index:9990; min-width:184px; padding:6px;
+  background:var(--paper); border:1px solid var(--line); border-radius:var(--r-md,12px);
+  box-shadow:var(--sh-3);
+  -webkit-backdrop-filter:blur(16px) saturate(1.4); backdrop-filter:blur(16px) saturate(1.4);
+  animation:mctxIn var(--d-fast) var(--e-out) both;
+}
+@keyframes mctxIn{ from{ opacity:0; transform:scale(.95) translateY(-4px) } to{ opacity:1; transform:none } }
+.mctx button{
+  display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  border:none; background:transparent; color:var(--ink); font-family:inherit;
+  font-size:13.2px; font-weight:600; padding:9px 11px; border-radius:var(--r-sm,9px);
+  cursor:pointer; transition:all var(--d-fast) var(--e-out);
+}
+.mctx button:hover{ background:var(--red); color:#fff }
+.mctx button i{
+  flex:0 0 auto; width:17px; text-align:center; font-style:normal;
+  font-size:12.5px; opacity:.7;
+}
+.mctx-sep{ display:block; height:1px; background:var(--line); margin:5px 9px }
+
+/* ═══════════════════════════════════════════════════════════
+   五、暗色主题适配（跟随站内，不单独做）
+   ═══════════════════════════════════════════════════════════ */
+html[data-sxq-theme="dark"] .mpb-main{
+  background:color-mix(in srgb, #1c1b19 88%, transparent);
+  box-shadow:0 -8px 28px rgba(0,0,0,.4);
+}
+html[data-sxq-theme="dark"] .mpb-queue{ background:color-mix(in srgb, #1c1b19 96%, transparent) }
+html[data-sxq-theme="dark"] .msl-cov,
+html[data-sxq-theme="dark"] .mpb-cover{ background-color:#2a2926 }
+html[data-sxq-theme="dark"] .mctx{ background:#232220 }
+
+/* ═══════════════════════════════════════════════════════════
+   六、响应式（电脑优先，手机能用）
+   ═══════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .mpb-main{ grid-template-columns:1fr auto; height:64px; gap:var(--m-2,8px) }
+  .mpb-q-side{ display:none }
+  .mpb-queue-in{ grid-template-columns:1fr }
+  .msl-row{ padding:9px 10px; gap:11px }
+  .msl-cov{ width:40px; height:40px }
+  .msl-d{ display:none }
+}
+@media(max-width:560px){
+  .mpb-l .mpb-meta span{ display:none }
+  .msl-act{ opacity:1 }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   七、把「现有 .mp-bar 结构」映射到两层新设计
+   ─────────────────────────────────────────────────────────────
+   为什么用映射而不是重写结构：
+     .mp-bar 的类名被 paintTime / 事件委托 / paint 多处引用
+     （如 .mp-bar .mp-cur、.mp-bar [data-act]）。
+     重写 DOM 会连带改 JS，风险大 —— 之前 app.js 已经栽过一次。
+     改 CSS 达到同样视觉效果，改动面最小。
+   两层 = ① 贴顶的细进度条（复用原有的 .mp-track）
+          ② 下面一行控制（封面 + 歌名歌手 + 时间 + 按键）
+   ═══════════════════════════════════════════════════════════ */
+.mp-bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:1002;
+  height:76px; display:flex; align-items:center; gap:var(--m-4,16px);
+  padding:0 clamp(12px,2vw,22px);
+  background:color-mix(in srgb, var(--paper) 90%, transparent);
+  border-top:1px solid var(--line);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+  backdrop-filter:blur(18px) saturate(1.6);
+  box-shadow:0 -8px 28px rgba(31,28,24,.07);
+}
+/* 背景装饰层不要了（原来那层渐变会和新设计打架） */
+.mp-bar .mp-bg{ display:none }
+
+/* ① 第一层：细进度条，贴在最顶上，通栏 */
+.mp-bar .mp-meta{ position:static; flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center }
+.mp-bar .mp-track{
+  position:absolute; left:0; right:0; top:0; height:3px;
+  background:transparent; border-radius:0; overflow:visible;
+  transition:height var(--d-fast) var(--e-out);
+}
+.mp-bar .mp-track::before{
+  content:""; position:absolute; inset:0; background:rgba(20,18,16,.09);
+}
+.mp-bar .mp-fill{
+  position:relative; height:100%; background:var(--red); border-radius:0;
+  transition:width 120ms linear;
+}
+.mp-bar .mp-track:hover{ height:6px }
+/* 可点区域加高，方便拖进度 */
+.mp-bar .mp-track::after{ content:""; position:absolute; left:0; right:0; top:-6px; height:18px }
+
+/* ② 封面 */
+.mp-bar .mp-cover{
+  width:46px; height:46px; border-radius:var(--r-sm,9px); flex:0 0 auto;
+  background:var(--paper2) center/cover no-repeat; box-shadow:var(--sh-1);
+  cursor:pointer; overflow:hidden; position:relative;
+  transition:transform var(--d-fast) var(--e-out);
+}
+.mp-bar .mp-cover:hover{ transform:scale(1.06) }
+.mp-bar .mp-cover-ph{ display:grid; place-items:center; height:100%; color:var(--ink-3);
+  font-size:15px; font-weight:900 }
+.mp-bar .mp-cover[style*="url"] .mp-cover-ph{ display:none }
+
+/* ③ 歌名歌手 */
+.mp-bar .mp-name{
+  display:block; font-size:13.5px; font-weight:800; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;
+}
+.mp-bar .mp-artist{
+  display:block; font-size:11.5px; color:var(--ink-3); margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* ④ 时间 */
+.mp-bar .mp-time{
+  flex:0 0 auto; display:flex; align-items:baseline; gap:4px;
+  font-family:var(--mono,monospace); font-size:11.5px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums;
+}
+.mp-bar .mp-time .mp-sep{ opacity:.45 }
+
+/* ⑤ 按键行 */
+.mp-bar .mp-acts{ flex:0 0 auto; display:flex; align-items:center; gap:var(--m-2,8px) }
+.mp-bar .mp-btn{
+  width:34px; height:34px; border:none; background:transparent; border-radius:50%;
+  color:var(--ink-2); cursor:pointer; display:grid; place-items:center;
+  transition:all var(--d-fast) var(--e-out); font-family:inherit;
+}
+.mp-bar .mp-btn:hover{ background:rgba(20,18,16,.06); color:var(--ink) }
+.mp-bar .mp-btn:active{ transform:scale(.92) }
+.mp-bar .mp-btn svg{ width:19px; height:19px }
+.mp-bar .mp-play{
+  width:42px; height:42px; background:var(--red); color:#fff;
+  box-shadow:0 4px 14px rgba(214,72,47,.32);
+}
+.mp-bar .mp-play:hover{ background:#e2573c; color:#fff; transform:scale(1.05) }
+.mp-bar .mp-play svg{ width:21px; height:21px }
+/* 音量滑块：平时收起，点音量键才展开 */
+.mp-bar .mp-vol{ width:0; opacity:0; transition:all var(--d-mid) var(--e-out); accent-color:var(--red) }
+.mp-bar.vol-open .mp-vol{ width:82px; opacity:1; margin-left:var(--m-1,4px) }
+/* 收藏键选中态 */
+.mp-bar .mp-btn.on{ color:var(--red) }
+
+/* 省掉旧的重复样式：.mp-bar 原有的定位/圆角等一律让位给上面的新规则 */
+@media(max-width:900px){
+  .mp-bar{ height:64px; gap:var(--m-2,8px) }
+  .mp-bar .mp-cover{ width:40px; height:40px }
+  .mp-bar .mp-time{ display:none }
+  .mp-bar .mp-vol,
+  .mp-bar.vol-open .mp-vol{ display:none }
+}
+@media(max-width:560px){
+  .mp-bar .mp-artist{ display:none }
+  .mp-bar .mp-acts .mp-btn[data-act="list"]{ display:none }
+}
+html[data-sxq-theme="dark"] .mp-bar{
+  background:color-mix(in srgb, #1c1b19 90%, transparent);
+  box-shadow:0 -8px 28px rgba(0,0,0,.4);
+}
+html[data-sxq-theme="dark"] .mp-bar .mp-track::before{ background:rgba(255,255,255,.12) }
